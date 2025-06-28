@@ -3,7 +3,7 @@ import clsx from "clsx"
 import { useState, useRef, useEffect } from "react"
 import { gsap } from "gsap"
 import { CustomRadio, CustomCheckbox } from "@/components/custom-inputs"
-import { AnimatedText, AnimatedHeading } from "@/components/animated-text"
+import { AnimatedText } from "@/components/animated-text"
 
 type QuestionType = "text" | "email" | "select" | "radio" | "checkbox" | "textarea"
 
@@ -43,6 +43,7 @@ export function MultiQuestionForm({ questions, formAction, buttonCopy }: MultiQu
   const [answers, setAnswers] = useState<Record<string, any>>({})
   const [isInitialized, setIsInitialized] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
   const questionRefs = useRef<(HTMLDivElement | null)[]>([])
   const successRef = useRef<HTMLDivElement>(null)
   const progressRef = useRef<HTMLDivElement>(null)
@@ -57,7 +58,11 @@ export function MultiQuestionForm({ questions, formAction, buttonCopy }: MultiQu
   useEffect(() => {
     if (!isInitialized) {
       // 进度条初始化动画
-      if (progressBarRef.current) {
+      if (progressBarRef.current && progressRef.current) {
+        // 设置初始进度
+        const initialProgress = ((currentStep + 1) / totalSteps) * 100
+        gsap.set(progressRef.current, { width: `${initialProgress}%` })
+
         gsap.fromTo(
           progressBarRef.current,
           { scaleX: 0, opacity: 0 },
@@ -76,34 +81,70 @@ export function MultiQuestionForm({ questions, formAction, buttonCopy }: MultiQu
 
       setIsInitialized(true)
     }
-  }, [isInitialized])
+  }, [isInitialized, currentStep, totalSteps])
 
-  // 步骤切换时的动画
+  // 内容高度变化动画
   useEffect(() => {
-    if (isInitialized) {
-      if (isSuccessStep && successRef.current) {
-        // 成功页面动画
-        gsap.fromTo(
-          successRef.current,
-          { opacity: 0, y: 30, scale: 0.95 },
-          { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: "power2.out" },
-        )
-      } else if (questionRefs.current[currentStep]) {
-        // 问题页面动画
-        gsap.fromTo(
-          questionRefs.current[currentStep],
-          { opacity: 0, y: 30, scale: 0.95 },
-          { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: "power2.out" },
-        )
-      }
+    if (isInitialized && contentRef.current) {
+      // 获取当前内容的实际高度
+      const currentElement = isSuccessStep ? successRef.current : questionRefs.current[currentStep]
 
-      // 进度条更新（直接更新，无动画，除了初始化）
-      if (progressRef.current) {
-        const progress = ((currentStep + 1) / totalSteps) * 100
-        gsap.set(progressRef.current, { width: `${progress}%` })
+      if (currentElement) {
+        // 临时显示元素以测量高度
+        const wasHidden = currentElement.style.display === "none" || currentElement.classList.contains("hidden")
+        if (wasHidden) {
+          currentElement.style.visibility = "hidden"
+          currentElement.style.display = "block"
+          currentElement.classList.remove("hidden")
+        }
+
+        const newHeight = currentElement.scrollHeight
+
+        if (wasHidden) {
+          currentElement.style.display = "none"
+          currentElement.style.visibility = "visible"
+          currentElement.classList.add("hidden")
+        }
+
+        // 动画到新高度
+        gsap.to(contentRef.current, {
+          height: newHeight + "px",
+          duration: 0.5,
+          ease: "power2.out",
+          onComplete: () => {
+            // 动画完成后显示当前内容
+            if (isSuccessStep && successRef.current) {
+              successRef.current.classList.remove("hidden")
+              gsap.fromTo(
+                successRef.current,
+                { opacity: 0, y: 20 },
+                { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" },
+              )
+            } else if (questionRefs.current[currentStep]) {
+              questionRefs.current[currentStep]?.classList.remove("hidden")
+              gsap.fromTo(
+                questionRefs.current[currentStep],
+                { opacity: 0, y: 20 },
+                { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" },
+              )
+            }
+          },
+        })
       }
     }
-  }, [currentStep, totalSteps, isInitialized, isSuccessStep])
+  }, [currentStep, isInitialized, isSuccessStep])
+
+  // 单独处理进度条动画
+  useEffect(() => {
+    if (isInitialized && progressRef.current) {
+      const progress = ((currentStep + 1) / totalSteps) * 100
+      gsap.to(progressRef.current, {
+        width: `${progress}%`,
+        duration: 0.8,
+        ease: "power2.out",
+      })
+    }
+  }, [currentStep, totalSteps, isInitialized])
 
   const handleNext = () => {
     if (isSuccessStep) return
@@ -115,47 +156,43 @@ export function MultiQuestionForm({ questions, formAction, buttonCopy }: MultiQu
       return
     }
 
-    if (currentStep < questions.length - 1) {
-      // 普通步骤切换
-      gsap.to(questionRefs.current[currentStep], {
+    // 隐藏当前内容
+    const currentElement = questionRefs.current[currentStep]
+    if (currentElement) {
+      gsap.to(currentElement, {
         opacity: 0,
-        y: -30,
-        scale: 0.95,
-        duration: 0.4,
+        y: -20,
+        duration: 0.3,
         ease: "power2.in",
         onComplete: () => {
-          setCurrentStep(currentStep + 1)
+          currentElement.classList.add("hidden")
+          if (currentStep < questions.length - 1) {
+            setCurrentStep(currentStep + 1)
+          } else {
+            handleSubmit()
+          }
         },
       })
-    } else {
-      // 最后一步，提交表单
-      handleSubmit()
     }
   }
 
   const handlePrevious = () => {
-    if (isSuccessStep) {
-      // 从成功页面返回到最后一个问题
-      gsap.to(successRef.current, {
+    const currentElement = isSuccessStep ? successRef.current : questionRefs.current[currentStep]
+
+    if (currentElement) {
+      gsap.to(currentElement, {
         opacity: 0,
-        y: 30,
-        scale: 0.95,
-        duration: 0.4,
+        y: 20,
+        duration: 0.3,
         ease: "power2.in",
         onComplete: () => {
-          setState(STATES.idle)
-          setCurrentStep(currentStep - 1)
-        },
-      })
-    } else if (currentStep > 0) {
-      gsap.to(questionRefs.current[currentStep], {
-        opacity: 0,
-        y: 30,
-        scale: 0.95,
-        duration: 0.4,
-        ease: "power2.in",
-        onComplete: () => {
-          setCurrentStep(currentStep - 1)
+          currentElement.classList.add("hidden")
+          if (isSuccessStep) {
+            setState(STATES.idle)
+            setCurrentStep(currentStep - 1)
+          } else if (currentStep > 0) {
+            setCurrentStep(currentStep - 1)
+          }
         },
       })
     }
@@ -187,17 +224,20 @@ export function MultiQuestionForm({ questions, formAction, buttonCopy }: MultiQu
 
         if (data.success) {
           setState(STATES.success)
-          // 切换到成功页面
-          gsap.to(questionRefs.current[currentStep], {
-            opacity: 0,
-            y: -30,
-            scale: 0.95,
-            duration: 0.4,
-            ease: "power2.in",
-            onComplete: () => {
-              setCurrentStep(questions.length) // 切换到成功步骤
-            },
-          })
+          // 隐藏当前问题并切换到成功页面
+          const currentElement = questionRefs.current[currentStep]
+          if (currentElement) {
+            gsap.to(currentElement, {
+              opacity: 0,
+              y: -20,
+              duration: 0.3,
+              ease: "power2.in",
+              onComplete: () => {
+                currentElement.classList.add("hidden")
+                setCurrentStep(questions.length)
+              },
+            })
+          }
         } else {
           setState(STATES.error)
           setError(data.error)
@@ -222,17 +262,6 @@ export function MultiQuestionForm({ questions, formAction, buttonCopy }: MultiQu
     setAnswers((prev) => ({ ...prev, [questionId]: value }))
   }
 
-  // 为输入控件添加动画效果
-  const animateControl = (element: HTMLElement) => {
-    gsap.to(element, {
-      scale: 1.02,
-      duration: 0.1,
-      yoyo: true,
-      repeat: 1,
-      ease: "power2.inOut",
-    })
-  }
-
   const renderQuestion = (question: Question, index: number) => {
     const isVisible = index === currentStep && !isSuccessStep
 
@@ -255,26 +284,11 @@ export function MultiQuestionForm({ questions, formAction, buttonCopy }: MultiQu
               value={answers[question.id] || ""}
               onChange={(e) => {
                 updateAnswer(question.id, e.target.value)
-                animateControl(e.target)
-              }}
-              onFocus={(e) => {
-                gsap.to(e.target, {
-                  scale: 1.01,
-                  duration: 0.2,
-                  ease: "power2.out",
-                })
-              }}
-              onBlur={(e) => {
-                gsap.to(e.target, {
-                  scale: 1,
-                  duration: 0.2,
-                  ease: "power2.out",
-                })
               }}
               className={clsx(
-                "w-full px-4 py-4 bg-slate-2/50 border border-slate-6 rounded-xl text-slate-12 placeholder:text-slate-9",
-                "focus:outline-none focus:ring-2 focus:ring-slate-8 focus:border-transparent",
-                "transition-all duration-200 backdrop-blur-sm",
+                "w-full px-4 py-4 bg-white dark:bg-slate-1 border border-slate-4 rounded-xl text-slate-12 placeholder:text-slate-9",
+                "focus:outline-none focus:ring-2 focus:ring-slate-8 focus:border-slate-8",
+                "transition-all duration-200 shadow-sm",
               )}
             />
           )}
@@ -286,26 +300,11 @@ export function MultiQuestionForm({ questions, formAction, buttonCopy }: MultiQu
               value={answers[question.id] || ""}
               onChange={(e) => {
                 updateAnswer(question.id, e.target.value)
-                animateControl(e.target)
-              }}
-              onFocus={(e) => {
-                gsap.to(e.target, {
-                  scale: 1.01,
-                  duration: 0.2,
-                  ease: "power2.out",
-                })
-              }}
-              onBlur={(e) => {
-                gsap.to(e.target, {
-                  scale: 1,
-                  duration: 0.2,
-                  ease: "power2.out",
-                })
               }}
               className={clsx(
-                "w-full px-4 py-4 bg-slate-2/50 border border-slate-6 rounded-xl text-slate-12 placeholder:text-slate-9",
-                "focus:outline-none focus:ring-2 focus:ring-slate-8 focus:border-transparent",
-                "transition-all duration-200 backdrop-blur-sm",
+                "w-full px-4 py-4 bg-white dark:bg-slate-1 border border-slate-4 rounded-xl text-slate-12 placeholder:text-slate-9",
+                "focus:outline-none focus:ring-2 focus:ring-slate-8 focus:border-slate-8",
+                "transition-all duration-200 shadow-sm",
               )}
             />
           )}
@@ -316,65 +315,44 @@ export function MultiQuestionForm({ questions, formAction, buttonCopy }: MultiQu
               value={answers[question.id] || ""}
               onChange={(e) => {
                 updateAnswer(question.id, e.target.value)
-                animateControl(e.target)
-              }}
-              onFocus={(e) => {
-                gsap.to(e.target, {
-                  scale: 1.01,
-                  duration: 0.2,
-                  ease: "power2.out",
-                })
-              }}
-              onBlur={(e) => {
-                gsap.to(e.target, {
-                  scale: 1,
-                  duration: 0.2,
-                  ease: "power2.out",
-                })
               }}
               rows={4}
               className={clsx(
-                "w-full px-4 py-4 bg-slate-2/50 border border-slate-6 rounded-xl text-slate-12 placeholder:text-slate-9",
-                "focus:outline-none focus:ring-2 focus:ring-slate-8 focus:border-transparent",
-                "transition-all duration-200 backdrop-blur-sm resize-none",
+                "w-full px-4 py-4 bg-white dark:bg-slate-1 border border-slate-4 rounded-xl text-slate-12 placeholder:text-slate-9",
+                "focus:outline-none focus:ring-2 focus:ring-slate-8 focus:border-slate-8",
+                "transition-all duration-200 shadow-sm resize-none",
               )}
             />
           )}
 
           {question.type === "select" && (
-            <select
-              value={answers[question.id] || ""}
-              onChange={(e) => {
-                updateAnswer(question.id, e.target.value)
-                animateControl(e.target)
-              }}
-              onFocus={(e) => {
-                gsap.to(e.target, {
-                  scale: 1.01,
-                  duration: 0.2,
-                  ease: "power2.out",
-                })
-              }}
-              onBlur={(e) => {
-                gsap.to(e.target, {
-                  scale: 1,
-                  duration: 0.2,
-                  ease: "power2.out",
-                })
-              }}
-              className={clsx(
-                "w-full px-4 py-4 bg-slate-2/50 border border-slate-6 rounded-xl text-slate-12",
-                "focus:outline-none focus:ring-2 focus:ring-slate-8 focus:border-transparent",
-                "transition-all duration-200 backdrop-blur-sm",
-              )}
-            >
-              <option value="">请选择...</option>
-              {question.options?.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={answers[question.id] || ""}
+                onChange={(e) => {
+                  updateAnswer(question.id, e.target.value)
+                }}
+                className={clsx(
+                  "w-full px-4 py-4 bg-white dark:bg-slate-1 border border-slate-4 rounded-xl text-slate-12",
+                  "focus:outline-none focus:ring-2 focus:ring-slate-8 focus:border-slate-8",
+                  "transition-all duration-200 shadow-sm appearance-none cursor-pointer",
+                  "pr-12", // 为箭头留出空间
+                )}
+              >
+                <option value="">请选择...</option>
+                {question.options?.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              {/* 自定义下拉箭头 */}
+              <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                <svg className="w-5 h-5 text-slate-9" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
           )}
 
           {question.type === "radio" && (
@@ -422,51 +400,54 @@ export function MultiQuestionForm({ questions, formAction, buttonCopy }: MultiQu
     )
   }
 
-  // 渲染成功页面
+  // 渲染成功页面 - 按照截图设计
   const renderSuccessPage = () => {
     return (
       <div ref={successRef} className={clsx("w-full", !isSuccessStep && "hidden")}>
-        <div className="text-center space-y-6 p-8 bg-green-50 dark:bg-green-900/20 rounded-xl backdrop-blur-sm border border-green-200 dark:border-green-800">
+        <div className="text-center space-y-6 p-8 bg-slate-12/90 dark:bg-slate-12/95 rounded-2xl backdrop-blur-sm border border-slate-6">
+          {/* 庆祝图标 */}
           <div className="text-6xl">🎉</div>
-          <AnimatedHeading level={2} className="text-2xl font-bold text-green-600 dark:text-green-400">
-            申请提交成功！
-          </AnimatedHeading>
-          <AnimatedText delay={0.2}>
-            <div className="space-y-4">
-              <p className="text-slate-11 text-lg">感谢您的申请！我们已收到您的信息。</p>
-              <p className="text-sm text-slate-10">
-                我们会在 <span className="font-medium text-slate-11">24-48小时内</span> 通过邮件与您联系，
-                请注意查收邮箱（包括垃圾邮件文件夹）。
-              </p>
-              <div className="bg-slate-2/50 p-6 rounded-lg">
-                <p className="text-sm text-slate-9 mb-3 font-medium">接下来您将获得：</p>
-                <ul className="text-sm text-slate-10 space-y-2 text-left">
-                  <li className="flex items-center gap-2">
-                    <span className="text-green-500">✓</span>
-                    产品早期访问权限
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-green-500">✓</span>
-                    专属优惠和折扣
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-green-500">✓</span>
-                    优先技术支持
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="text-green-500">✓</span>
-                    产品更新通知
-                  </li>
-                </ul>
-              </div>
-              <div className="text-xs text-slate-9 bg-slate-2/30 p-4 rounded-lg">
-                <p className="mb-1">
-                  📧 邮件将从 <span className="font-mono">noreply@ourproduct.com</span> 发送
-                </p>
-                <p>🕒 预计产品将在 2024 年第二季度正式发布</p>
-              </div>
-            </div>
-          </AnimatedText>
+
+          {/* 标题 */}
+          <h2 className="text-2xl font-bold text-slate-1">申请提交成功！</h2>
+
+          {/* 感谢文字 */}
+          <p className="text-slate-3 text-lg">感谢您的申请！我们已收到您的信息。</p>
+
+          {/* 时间说明 */}
+          <p className="text-slate-4 text-sm">
+            我们会在 <span className="font-medium text-slate-2">24-48小时内</span> 通过邮件与您联系，
+            请注意查收邮箱（包括垃圾邮件文件夹）。
+          </p>
+
+          {/* 获得权益 */}
+          <div className="text-left bg-slate-11/20 p-6 rounded-xl">
+            <p className="text-slate-3 text-sm mb-4 font-medium">接下来您将获得：</p>
+            <ul className="text-slate-4 text-sm space-y-2">
+              <li className="flex items-center gap-3">
+                <span className="w-1.5 h-1.5 bg-slate-4 rounded-full flex-shrink-0"></span>
+                产品早期访问权限
+              </li>
+              <li className="flex items-center gap-3">
+                <span className="w-1.5 h-1.5 bg-slate-4 rounded-full flex-shrink-0"></span>
+                专属优惠和折扣
+              </li>
+              <li className="flex items-center gap-3">
+                <span className="w-1.5 h-1.5 bg-slate-4 rounded-full flex-shrink-0"></span>
+                优先技术支持
+              </li>
+              <li className="flex items-center gap-3">
+                <span className="w-1.5 h-1.5 bg-slate-4 rounded-full flex-shrink-0"></span>
+                产品更新通知
+              </li>
+            </ul>
+          </div>
+
+          {/* 底部说明 */}
+          <div className="text-xs text-slate-5 space-y-1">
+            <p>我们承诺保护您的隐私，不会向第三方分享您的个人信息</p>
+            <p>预计产品将在 2024 年第二季度正式发布</p>
+          </div>
         </div>
       </div>
     )
@@ -479,8 +460,8 @@ export function MultiQuestionForm({ questions, formAction, buttonCopy }: MultiQu
         <div ref={progressBarRef} className="w-full bg-slate-3/50 rounded-full h-2 backdrop-blur-sm">
           <div
             ref={progressRef}
-            className="bg-gradient-to-r from-slate-12 to-slate-10 h-2 rounded-full"
-            style={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
+            className="bg-gradient-to-r from-slate-12 to-slate-10 h-2 rounded-full transition-all duration-300"
+            style={{ width: "0%" }}
           />
         </div>
       </div>
@@ -492,8 +473,8 @@ export function MultiQuestionForm({ questions, formAction, buttonCopy }: MultiQu
         </span>
       </div>
 
-      {/* 问题或成功页面 */}
-      <div className="min-h-[300px] flex items-start justify-center">
+      {/* 动态高度容器 */}
+      <div ref={contentRef} className="overflow-hidden" style={{ height: "auto" }}>
         {questions.map((question, index) => renderQuestion(question, index))}
         {renderSuccessPage()}
       </div>
@@ -555,7 +536,7 @@ export function MultiQuestionForm({ questions, formAction, buttonCopy }: MultiQu
             onClick={() => window.location.reload()}
             className={clsx(
               "px-8 py-3 text-sm font-medium rounded-xl transition-all duration-200",
-              "bg-green-600 text-white hover:bg-green-700 shadow-lg",
+              "bg-slate-1 text-slate-12 hover:bg-slate-2 shadow-lg border border-slate-6",
               "transform hover:scale-105 active:scale-95",
             )}
           >

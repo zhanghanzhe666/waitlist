@@ -12,7 +12,7 @@ const font = Alex_Brush({
   weight: "400",
 })
 
-export const dynamic = "force_static"
+export const dynamic = "force-static"
 export const revalidate = 30
 
 export const generateMetadata = async (): Promise<Metadata> => {

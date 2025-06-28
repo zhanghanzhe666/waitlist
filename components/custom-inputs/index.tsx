@@ -1,8 +1,6 @@
 "use client"
-import { useRef } from "react"
 import type React from "react"
 
-import { gsap } from "gsap"
 import clsx from "clsx"
 
 interface CustomRadioProps {
@@ -15,21 +13,9 @@ interface CustomRadioProps {
 }
 
 export function CustomRadio({ name, value, checked, onChange, children, className }: CustomRadioProps) {
-  const radioRef = useRef<HTMLDivElement>(null)
-
   const handleClick = () => {
     onChange(value)
-
-    // 点击动画
-    if (radioRef.current) {
-      gsap.to(radioRef.current, {
-        scale: 0.95,
-        duration: 0.1,
-        yoyo: true,
-        repeat: 1,
-        ease: "power2.inOut",
-      })
-    }
+    // 移除点击动画
   }
 
   return (
@@ -43,7 +29,6 @@ export function CustomRadio({ name, value, checked, onChange, children, classNam
       onClick={handleClick}
     >
       <div
-        ref={radioRef}
         className={clsx(
           "relative w-5 h-5 rounded-full border-2 transition-all duration-200 flex items-center justify-center",
           checked ? "border-slate-12 bg-slate-12" : "border-slate-6 bg-transparent hover:border-slate-8",
@@ -70,31 +55,9 @@ interface CustomCheckboxProps {
 }
 
 export function CustomCheckbox({ value, checked, onChange, children, className }: CustomCheckboxProps) {
-  const checkboxRef = useRef<HTMLDivElement>(null)
-  const checkmarkRef = useRef<HTMLDivElement>(null)
-
   const handleClick = () => {
     onChange(value, !checked)
-
-    // 点击动画
-    if (checkboxRef.current) {
-      gsap.to(checkboxRef.current, {
-        scale: 0.9,
-        duration: 0.1,
-        yoyo: true,
-        repeat: 1,
-        ease: "power2.inOut",
-      })
-    }
-
-    // 选中状态动画
-    if (checkmarkRef.current && !checked) {
-      gsap.fromTo(
-        checkmarkRef.current,
-        { scale: 0, rotation: -180 },
-        { scale: 1, rotation: 0, duration: 0.3, ease: "back.out(1.7)" },
-      )
-    }
+    // 移除所有点击动画
   }
 
   return (
@@ -108,17 +71,12 @@ export function CustomCheckbox({ value, checked, onChange, children, className }
       onClick={handleClick}
     >
       <div
-        ref={checkboxRef}
         className={clsx(
           "relative w-5 h-5 rounded-lg border-2 transition-all duration-200 flex items-center justify-center",
           checked ? "border-slate-12 bg-slate-12" : "border-slate-6 bg-transparent hover:border-slate-8",
         )}
       >
-        {checked && (
-          <div ref={checkmarkRef} className="text-slate-1 text-xs font-bold">
-            ✓
-          </div>
-        )}
+        {checked && <div className="text-slate-1 text-xs font-bold">✓</div>}
       </div>
       <span className="text-sm text-slate-11 group-hover:text-slate-12 transition-colors duration-200">{children}</span>
     </label>
