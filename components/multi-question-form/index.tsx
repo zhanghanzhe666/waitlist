@@ -83,7 +83,7 @@ export function MultiQuestionForm({ questions, formAction, buttonCopy }: MultiQu
     }
   }, [isInitialized, currentStep, totalSteps])
 
-  // 内容高度变化动画
+  // 内容高度变化动画 - 只处理高度，不处理内容显示动画
   useEffect(() => {
     if (isInitialized && contentRef.current) {
       // 获取当前内容的实际高度
@@ -106,29 +106,11 @@ export function MultiQuestionForm({ questions, formAction, buttonCopy }: MultiQu
           currentElement.classList.add("hidden")
         }
 
-        // 动画到新高度
+        // 只动画高度变化
         gsap.to(contentRef.current, {
           height: newHeight + "px",
           duration: 0.5,
           ease: "power2.out",
-          onComplete: () => {
-            // 动画完成后显示当前内容
-            if (isSuccessStep && successRef.current) {
-              successRef.current.classList.remove("hidden")
-              gsap.fromTo(
-                successRef.current,
-                { opacity: 0, y: 20 },
-                { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" },
-              )
-            } else if (questionRefs.current[currentStep]) {
-              questionRefs.current[currentStep]?.classList.remove("hidden")
-              gsap.fromTo(
-                questionRefs.current[currentStep],
-                { opacity: 0, y: 20 },
-                { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" },
-              )
-            }
-          },
         })
       }
     }
@@ -168,6 +150,14 @@ export function MultiQuestionForm({ questions, formAction, buttonCopy }: MultiQu
           currentElement.classList.add("hidden")
           if (currentStep < questions.length - 1) {
             setCurrentStep(currentStep + 1)
+            // 显示下一个问题
+            setTimeout(() => {
+              const nextElement = questionRefs.current[currentStep + 1]
+              if (nextElement) {
+                nextElement.classList.remove("hidden")
+                gsap.fromTo(nextElement, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" })
+              }
+            }, 100)
           } else {
             handleSubmit()
           }
@@ -190,8 +180,24 @@ export function MultiQuestionForm({ questions, formAction, buttonCopy }: MultiQu
           if (isSuccessStep) {
             setState(STATES.idle)
             setCurrentStep(currentStep - 1)
+            // 显示上一个问题
+            setTimeout(() => {
+              const prevElement = questionRefs.current[currentStep - 1]
+              if (prevElement) {
+                prevElement.classList.remove("hidden")
+                gsap.fromTo(prevElement, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" })
+              }
+            }, 100)
           } else if (currentStep > 0) {
             setCurrentStep(currentStep - 1)
+            // 显示上一个问题
+            setTimeout(() => {
+              const prevElement = questionRefs.current[currentStep - 1]
+              if (prevElement) {
+                prevElement.classList.remove("hidden")
+                gsap.fromTo(prevElement, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" })
+              }
+            }, 100)
           }
         },
       })
@@ -235,6 +241,17 @@ export function MultiQuestionForm({ questions, formAction, buttonCopy }: MultiQu
               onComplete: () => {
                 currentElement.classList.add("hidden")
                 setCurrentStep(questions.length)
+                // 显示成功页面
+                setTimeout(() => {
+                  if (successRef.current) {
+                    successRef.current.classList.remove("hidden")
+                    gsap.fromTo(
+                      successRef.current,
+                      { opacity: 0, y: 20 },
+                      { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" },
+                    )
+                  }
+                }, 100)
               },
             })
           }
