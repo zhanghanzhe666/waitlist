@@ -1,11 +1,14 @@
-"use client"
+'use client'
 
-import type React from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import clsx from "clsx"
-import { useEffect, useRef } from "react"
-import { gsap } from "gsap"
+import React from 'react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import clsx from 'clsx'
+
+// Constants for sizing
+const LINK_WIDTH = 90
+const PADDING = 24
+const BACKGROUND_PADDING = 20
 
 // NavbarLink component
 export const NavbarLink = ({
@@ -16,59 +19,11 @@ export const NavbarLink = ({
   children: React.ReactNode
 }) => {
   const pathname = usePathname()
-  const linkRef = useRef<HTMLAnchorElement>(null)
-  const isActive = pathname === href
-
-  useEffect(() => {
-    if (!linkRef.current) return
-
-    if (isActive) {
-      gsap.to(linkRef.current, {
-        scale: 1.05,
-        fontWeight: 600,
-        duration: 0.3,
-        ease: "back.out(1.7)",
-      })
-    } else {
-      gsap.to(linkRef.current, {
-        scale: 1,
-        fontWeight: 500,
-        duration: 0.3,
-        ease: "power2.out",
-      })
-    }
-  }, [isActive])
-
-  const handleMouseEnter = () => {
-    if (!isActive && linkRef.current) {
-      gsap.to(linkRef.current, {
-        scale: 1.02,
-        duration: 0.2,
-        ease: "power2.out",
-      })
-    }
-  }
-
-  const handleMouseLeave = () => {
-    if (!isActive && linkRef.current) {
-      gsap.to(linkRef.current, {
-        scale: 1,
-        duration: 0.2,
-        ease: "power2.out",
-      })
-    }
-  }
-
   return (
     <Link
-      ref={linkRef}
       href={href}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      className={clsx(
-        "relative text-sm py-1 px-3 text-slate-12 w-[90px] flex items-center justify-center rounded-full transition-opacity duration-200",
-        isActive ? "opacity-100" : "opacity-30 hover:opacity-60",
-      )}
+      className={`relative text-sm font-medium py-1 px-3 transition-colors duration-200 text-slate-12 w-[90px] flex items-center justify-center
+        ${pathname === href ? 'opacity-100' : 'opacity-30 hover:opacity-60'}`}
     >
       {children}
     </Link>
@@ -79,19 +34,16 @@ export const NavbarLink = ({
 export const NavbarLinkBackground = ({ links }: { links: string[] }) => {
   const pathname = usePathname()
   const activeIndex = links.indexOf(pathname)
-  const bgRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    if (!bgRef.current) return
-
-    gsap.to(bgRef.current, {
-      x: `calc(${activeIndex} * 90px)`,
-      opacity: activeIndex >= 0 ? 1 : 0,
-      scale: activeIndex >= 0 ? 1 : 0.8,
-      duration: 0.4,
-      ease: "back.out(1.7)",
-    })
-  }, [activeIndex])
-
-  return <div ref={bgRef} className="absolute top-1 bottom-1 w-[82px] left-1 bg-slate-3 rounded-full shadow-sm" />
+  return (
+    <div
+      className={clsx(
+        'absolute transition-all duration-200 ease-in-out h-7 rounded-full bg-slate-3'
+      )}
+      style={{
+        width: `90px`,
+        left: `calc((${activeIndex} * 90px) + 4px)`,
+      }}
+    />
+  )
 }

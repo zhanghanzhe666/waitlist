@@ -91,18 +91,6 @@ body {
   background-color: theme("colors.slate.12");
 }
 
-/* 表单字段动画 */
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 /* Only add padding when the body has a scrollbar */
 body:has(html:not(:last-child)) {
   padding-bottom: 6rem;
@@ -119,23 +107,4 @@ body:has(html:not(:last-child)) {
   --gradient-color-2: #1ac7ff;
   --gradient-color-3: #04ffb1;
   --gradient-color-4: #ff1ff1;
-}
-
-/* 自定义滚动条 */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgb(var(--slate-3));
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgb(var(--slate-8));
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgb(var(--slate-9));
 }

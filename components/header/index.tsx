@@ -1,6 +1,7 @@
-import { basehub } from "basehub";
-import { NavbarLink, NavbarLinkBackground } from "./link";
-import clsx from "clsx";
+import { basehub } from "basehub"
+import { NavbarLink, NavbarLinkBackground } from "./link"
+import { AnimatedText } from "../animated-text"
+import clsx from "clsx"
 
 export const Header = async () => {
   const {
@@ -14,31 +15,36 @@ export const Header = async () => {
         },
       },
     },
-  });
+  })
+
+  // 中文导航项映射
+  const chineseNavItems = navbar.items.map((item) => ({
+    ...item,
+    _title: item._title === "Waitlist" ? "候补名单" : item._title === "Manifesto" ? "我们的愿景" : item._title,
+  }))
 
   return (
     <div className="flex flex-col items-center justify-center">
-      <nav className="bg-slate-1 rounded-full">
-        <div
-          className={clsx(
-            "bg-slate-1 rounded-full p-1 flex relative items-center",
-            "shadow-[0px_-1px_3px_0px_rgba(0,_0,_0,_0.05),_0px_7px_2px_0px_rgba(0,_0,_0,_0.02),_0px_4px_2px_0px_rgba(0,_0,_0,_0.05),_0px_2px_1px_0px_rgba(0,_0,_0,_0.05),_0px_1px_1px_0px_rgba(0,_0,_0,_0.03),_0px_0px_1px_0px_rgba(0,_0,_0,_0.04)]",
-            "dark:shadow-[0px_-1px_3px_0px_rgba(0,_0,_0,_0.03),_0px_7px_2px_0px_rgba(0,_0,_0,_0.03),_0px_4px_2px_0px_rgba(0,_0,_0,_0.05),_0px_2px_1px_0px_rgba(0,_0,_0,_0.1),_0px_1px_1px_0px_rgba(0,_0,_0,_0.1),_0px_0px_1px_0px_rgba(0,_0,_0,_0.1)]"
-          )}
-        >
-          {/* Animated background */}
-          <NavbarLinkBackground
-            links={navbar.items.map((item) => item.href!)}
-          />
+      <AnimatedText delay={0.2}>
+        <nav className="bg-slate-1/80 dark:bg-slate-2/80 backdrop-blur-xl rounded-2xl border border-slate-6/50">
+          <div
+            className={clsx(
+              "bg-slate-1/80 dark:bg-slate-2/80 backdrop-blur-xl rounded-2xl p-1.5 flex relative items-center",
+              "shadow-lg shadow-slate-12/5 dark:shadow-slate-1/5",
+            )}
+          >
+            {/* 动画背景 */}
+            <NavbarLinkBackground links={chineseNavItems.map((item) => item.href!)} />
 
-          {/* Navigation items */}
-          {navbar.items.map(({ href, _title }) => (
-            <NavbarLink key={href} href={href ?? "/"}>
-              {_title}
-            </NavbarLink>
-          ))}
-        </div>
-      </nav>
+            {/* 导航项 */}
+            {chineseNavItems.map(({ href, _title }) => (
+              <NavbarLink key={href} href={href ?? "/"}>
+                {_title}
+              </NavbarLink>
+            ))}
+          </div>
+        </nav>
+      </AnimatedText>
     </div>
-  );
-};
+  )
+}

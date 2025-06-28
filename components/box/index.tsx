@@ -1,8 +1,9 @@
 import { basehub } from "basehub"
 import clsx from "clsx"
 import type { PropsWithChildren } from "react"
-import { ThemeSwitcher } from "../switch-theme"
+import { AnimatedThemeSwitcher } from "../animated-theme-switcher"
 import { DarkLightImage, darkLightImageFragment } from "../dark-light-image"
+import { AnimatedText } from "../animated-text"
 
 export async function WaitlistWrapper({ children }: PropsWithChildren) {
   const [
@@ -10,7 +11,7 @@ export async function WaitlistWrapper({ children }: PropsWithChildren) {
       settings: { logo },
     },
     {
-      footer: { showThemeSwitcher },
+      footer: { copyright, showThemeSwitcher },
     },
     {
       settings: { forcedTheme },
@@ -19,6 +20,18 @@ export async function WaitlistWrapper({ children }: PropsWithChildren) {
     basehub().query({ settings: { logo: darkLightImageFragment } }),
     basehub().query({
       footer: {
+        copyright: {
+          json: {
+            content: true,
+            blocks: {
+              __typename: true,
+              on_SocialLinkComponent: {
+                _id: true,
+                url: true,
+              },
+            },
+          },
+        },
         showThemeSwitcher: true,
       },
     }),
@@ -28,23 +41,33 @@ export async function WaitlistWrapper({ children }: PropsWithChildren) {
   return (
     <div
       className={clsx(
-        "w-full mx-auto max-w-[500px] flex flex-col justify-center items-center bg-gray-1/85 pb-0 overflow-hidden rounded-2xl",
-        "shadow-[0px_170px_48px_0px_rgba(18,_18,_19,_0.00),_0px_109px_44px_0px_rgba(18,_18,_19,_0.01),_0px_61px_37px_0px_rgba(18,_18,_19,_0.05),_0px_27px_27px_0px_rgba(18,_18,_19,_0.09),_0px_7px_15px_0px_rgba(18,_18,_19,_0.10)]",
+        "w-full mx-auto max-w-[600px] flex flex-col justify-center items-center",
+        "bg-slate-1/90 dark:bg-slate-2/90 backdrop-blur-xl border border-slate-6/50",
+        "pb-0 overflow-hidden rounded-3xl shadow-2xl",
+        "shadow-slate-12/10 dark:shadow-slate-1/10",
       )}
     >
-      <div className="flex flex-col items-center gap-4 flex-1 text-center w-full p-8 pb-4">
-        <div>
-          {logo && (
-            <div className="flex justify-center w-32 h-auto items-center mx-auto">
-              <DarkLightImage dark={logo.dark} light={logo.light} priority />
-            </div>
-          )}
-        </div>
-        <div className="flex flex-col gap-10">{children}</div>
+      <div className="flex flex-col items-center gap-6 flex-1 text-center w-full p-8 pb-4">
+        <AnimatedText delay={0.1}>
+          <div>
+            {logo && (
+              <div className="flex justify-center w-32 h-auto items-center mx-auto">
+                <DarkLightImage dark={logo.dark} light={logo.light} priority />
+              </div>
+            )}
+          </div>
+        </AnimatedText>
+        <div className="flex flex-col gap-12 w-full">{children}</div>
       </div>
-      <footer className="flex justify-between items-center w-full self-stretch px-8 py-3 text-sm bg-gray-12/[.07] overflow-hidden">
-        <p className="text-xs text-slate-10">© 2024 版权所有</p>
-        {Boolean(showThemeSwitcher && !forcedTheme) ? <ThemeSwitcher /> : null}
+      <footer className="flex justify-between items-center w-full self-stretch px-8 py-4 text-sm bg-slate-3/30 dark:bg-slate-4/30 backdrop-blur-sm border-t border-slate-6/50">
+        <AnimatedText delay={0.6}>
+          <div className="text-xs text-slate-10">© 2024 我们的产品. 保留所有权利.</div>
+        </AnimatedText>
+        {Boolean(showThemeSwitcher && !forcedTheme) ? (
+          <AnimatedText delay={0.7}>
+            <AnimatedThemeSwitcher />
+          </AnimatedText>
+        ) : null}
       </footer>
     </div>
   )
