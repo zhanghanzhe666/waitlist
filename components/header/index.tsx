@@ -20,7 +20,7 @@ export const Header = async () => {
   // 中文导航项映射
   const chineseNavItems = navbar.items.map((item) => ({
     ...item,
-    _title: item._title === "Waitlist" ? "候补名单" : item._title === "Manifesto" ? "我们的愿景" : item._title,
+    _title: item._title === "Waitlist" ? "候补名单" : item._title === "Manifesto" ? "关于" : item._title,
   }))
 
   return (
