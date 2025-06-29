@@ -3,6 +3,7 @@ import clsx from "clsx"
 import { useState, useRef, useEffect } from "react"
 import { gsap } from "gsap"
 import { CustomRadio, CustomCheckbox } from "@/components/custom-inputs"
+import { AnimatedSelect } from "@/components/animated-select"
 import { AnimatedText } from "@/components/animated-text"
 
 type QuestionType = "text" | "email" | "select" | "radio" | "checkbox" | "textarea"
@@ -304,7 +305,7 @@ export function MultiQuestionForm({ questions, formAction, buttonCopy }: MultiQu
               }}
               className={clsx(
                 "w-full px-4 py-4 bg-white dark:bg-slate-1 border border-slate-4 rounded-xl text-slate-12 placeholder:text-slate-9",
-                "focus:outline-none focus:ring-2 focus:ring-slate-8 focus:border-slate-8",
+                "focus:outline-none focus:border-slate-8",
                 "transition-all duration-200 shadow-sm",
               )}
             />
@@ -320,7 +321,7 @@ export function MultiQuestionForm({ questions, formAction, buttonCopy }: MultiQu
               }}
               className={clsx(
                 "w-full px-4 py-4 bg-white dark:bg-slate-1 border border-slate-4 rounded-xl text-slate-12 placeholder:text-slate-9",
-                "focus:outline-none focus:ring-2 focus:ring-slate-8 focus:border-slate-8",
+                "focus:outline-none focus:border-slate-8",
                 "transition-all duration-200 shadow-sm",
               )}
             />
@@ -336,40 +337,19 @@ export function MultiQuestionForm({ questions, formAction, buttonCopy }: MultiQu
               rows={4}
               className={clsx(
                 "w-full px-4 py-4 bg-white dark:bg-slate-1 border border-slate-4 rounded-xl text-slate-12 placeholder:text-slate-9",
-                "focus:outline-none focus:ring-2 focus:ring-slate-8 focus:border-slate-8",
+                "focus:outline-none focus:border-slate-8",
                 "transition-all duration-200 shadow-sm resize-none",
               )}
             />
           )}
 
           {question.type === "select" && (
-            <div className="relative">
-              <select
-                value={answers[question.id] || ""}
-                onChange={(e) => {
-                  updateAnswer(question.id, e.target.value)
-                }}
-                className={clsx(
-                  "w-full px-4 py-4 bg-white dark:bg-slate-1 border border-slate-4 rounded-xl text-slate-12",
-                  "focus:outline-none focus:ring-2 focus:ring-slate-8 focus:border-slate-8",
-                  "transition-all duration-200 shadow-sm appearance-none cursor-pointer",
-                  "pr-12", // 为箭头留出空间
-                )}
-              >
-                <option value="">请选择...</option>
-                {question.options?.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-              {/* 自定义下拉箭头 */}
-              <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
-                <svg className="w-5 h-5 text-slate-9" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </div>
+            <AnimatedSelect
+              value={answers[question.id] || ""}
+              onChange={(value) => updateAnswer(question.id, value)}
+              options={question.options || []}
+              placeholder="请选择..."
+            />
           )}
 
           {question.type === "radio" && (
@@ -514,6 +494,7 @@ export function MultiQuestionForm({ questions, formAction, buttonCopy }: MultiQu
           className={clsx(
             "px-6 py-3 text-sm font-medium rounded-xl transition-all duration-200",
             "bg-slate-2/50 backdrop-blur-sm border border-slate-6",
+            "focus:outline-none",
             currentStep === 0
               ? "text-slate-9 cursor-not-allowed opacity-50"
               : "text-slate-11 hover:text-slate-12 hover:bg-slate-3/50 hover:border-slate-8",
@@ -531,6 +512,7 @@ export function MultiQuestionForm({ questions, formAction, buttonCopy }: MultiQu
               "px-8 py-3 text-sm font-medium rounded-xl transition-all duration-200",
               "bg-slate-12 text-slate-1 hover:bg-slate-11 shadow-lg",
               "disabled:opacity-50 disabled:cursor-not-allowed",
+              "focus:outline-none",
               "transform hover:scale-105 active:scale-95",
             )}
           >
@@ -554,6 +536,7 @@ export function MultiQuestionForm({ questions, formAction, buttonCopy }: MultiQu
             className={clsx(
               "px-8 py-3 text-sm font-medium rounded-xl transition-all duration-200",
               "bg-slate-1 text-slate-12 hover:bg-slate-2 shadow-lg border border-slate-6",
+              "focus:outline-none",
               "transform hover:scale-105 active:scale-95",
             )}
           >
